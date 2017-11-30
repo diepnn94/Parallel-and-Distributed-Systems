@@ -1,0 +1,50 @@
+Ngoc Nguyen
+ID# 72114439
+
+
+First, in the main function, create a for loop with N number of philosopher to:
+
+Initialize the mutexes (using pthread_mutex_init)
+
+Then create the threads (using pthread_create, and pass in the function eat_meal with the argument struct phil_data[index] that was initialized with the philosopher's data)
+
+Then join all the thread together (using pthread_join)
+
+Then before exiting main, destroy all the threads (using pthread_destroy)
+
+for (i = 0 to number of philopher)
+	pthread_mutex_init(&mutexes[i], NULL);
+for (i = 0 to number of philopher)
+	pthread_create(&threads[i], NULL, eat_meal, (void*)&philosophers[i]);
+for (i = 0 to number of philopher)
+	pthread_join(threads[i], NULL);
+for (i = 0 to number of philopher)
+	pthread_destroy(&mutexes[i]);
+
+____________________________________________________________________________________________________________________________________________________________
+
+In the eat_meal function:
+
+This function takes in an argument, which is a struct phil_data representing a philosopher thread that want to eat
+In this function, first we need to check if the philosopher has eaten all three courses yet, so in a while loop checking if philosopher's course is less than 3
+
+If the philosopher has not finished 3 courses, then using pthread_mutex_trylock to check if the fork(mutex) infront of the philosopher is available using the philosopher's number in the struct, if it is available, then we need to check if the fork on the right hand of the philosopher is available by incrementing the philosopher's number mod number of thread-1. If the right fork is available, the philosopher has successfully acquired two forks(mutexes) so we incremented the philosopher's course number by 1 to represent that the philosopher has finished a course, then we call sleep(1), then before exiting to try again for the next course, that philosopher needs to unlock the mutexes that it held, so we need to call pthread_mutex_unlock on the philospher number and philosopher number+1 mod number of thread-1
+
+If the mutex infront of the philosopher is available but the fork on the right is not available, we need to call pthread_mutex_unlock on the mutex infront of the philosopher because pthread_mutex_trylock automatically lock when checking and try again
+
+If the mutex infront of the philosopher is not available, that philosopher will keep trying until it can acquire two forks
+	
+When all philosophers finished eating, it will exit in the main function
+
+while (philosopher course < 3)
+	if (pthread_mutex_trylock(&mutexes[philosopher number]) == 0)
+		if (pthread_mutex_trylock(&mutexes[philosopher number + 1 mod num_threads -1]))
+			philosopher course ++
+			sleep(1)
+			pthread_mutex_unlock(&mutexes[philosopher number])
+			pthread_mutex_unlock(&mutexes[philosopher number +1 mod num_threads -1])
+
+		else 
+			pthread_mutex_unlock(&philosopher number)
+	
+

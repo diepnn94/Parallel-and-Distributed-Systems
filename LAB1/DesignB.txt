@@ -1,0 +1,50 @@
+Ngoc Nguyen
+ID# 72114439
+
+int current index = 0;
+
+In the calculate() function:
+	
+First, we need to determine which chunk the thread will be executing, so we need to check the global variable index, when calling on this variable, we need to use a mutex to make sure that other threads will not be changing this variable, thus before unlocking it, we need to update it to reflect the next available index(chunk) (such as index = index + chunkSize, or index = index + leftover_chunk)
+
+Once we acquired this variable index, we will make this as our starting index, and then we should create local ending index by adding the starting index with the chunkSize ( if the leftover index is less than chunksize, then the ending index would be starting index + (image_height - starting index)
+
+Use the sobel algorithm given in the lab write up, keep everything the same except the first 2 outer loops 
+For the first outer loop, we will be looping from the starting index to the ending index
+For the second outer loop, we will be looping from 0 to the image_width
+So each thread is responsible for a chunk in rectangle going from starting index to ending index vertically and span all the horizonal indexes in that range
+
+This is done in a while loop, with the condition global variable index less than image_height, so as long as there is still some chunks left, after a thread finished a chunk it was given, it will loop back and ask for a new chunk until the all the indexes are processed
+
+while(true)
+
+	get the mutex/lock
+	get the current index
+	update the current index: index = index + chunkSize, or index = index + leftover_chunk when image height - current index < chunkSize
+	unlock the mutex so other thread can acquire and do the next available chunk
+
+	starting chunk = current index
+	if starting_chunk == image_height
+		break
+	ending chunk = starting chunk + chunkSize, or starting chunk = starting chunk + leftover_chunk when image height - current index < chunkSize
+	
+	for (i = starting chunk; i < ending chunk; i++)
+		for (y = 0; y < image_width; y++)
+			_sobel algorithm given in the write up, the rest should be the same
+	
+
+____________________________________________________________________________________________________________________________________________________________	
+
+In the dispatch_thread() function:
+	
+First, create a vector of threads
+
+Then using num_threads as the upper limit, in a for loop, call std::thread and push it onto the vector of thread and the function each thread takes in is called calculate with no argument
+
+Then after creating all the threads, loop in the vector of thread and join all the thread together
+
+std:: vector<std:: thread> threads
+for (i = 0 to number of threads given)
+	threads.push_back(std::thread(&calculate))
+for (auto&h : threads)
+	h.join()

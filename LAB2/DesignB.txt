@@ -1,0 +1,79 @@
+Ngoc Nguyen
+ID# 72114439
+
+
+Part B1:
+
+In the main function:
+_int size = loop through lines to determine the length of the array
+_initialize recv_buf = [13000][16]
+_chunkSize = size/num_processes
+_leftOver = size % num_processes
+_use MPI_Scatter to send chunks of lines to each processes
+_MPI_Scatter(lines, chunkSize, MPI_CHAR, recv_buf, chunkSize, MPI_CHAR, 0, MPI_COMM_WORLD)
+_call frequency(recv_buf, chunkSize, search_word) to compute the frequency of the search word and return an int
+_int result = frequency(recv_buf, chunkSize, search_word)
+_int to_return
+_use MPI_Reduce (result, to_return, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD)
+_if leftOver is greater than 0, it means that there is still some chunk that has not finished, so need to locate processId 0 and assign this chunk to process 0. Create a new array to store the leftover chunk and pass it in the frequency function, the return value of this should be added to the to_return value to obtain the over number of frequency
+_to_return should have the frequency of the search word
+
+
+frequency(recv_buf, chunkSize, search_word):
+_int to_return = 0
+_loops through the recv_buf and search each line to see if it contain the search_word, if so increment the to_return by 1
+_return to_return
+
+
+Part B2:
+
+int the main function:
+_recv_buf[13000][16]
+_if processId != 0, then use MPI_Recv to receive data from the previous rank, processId-1
+_chunkSize = size/num_processes
+__MPI_Scatter(lines, chunkSize, MPI_CHAR, recv_buf, chunkSize, MPI_CHAR, 0, MPI_COMM_WORLD)
+_call frequency(recv_buf, chunkSize, search_word) to compute the frequency of the search word and return an int
+_int result = frequency(recv_buf, chunkSize, search_word)
+_int temp
+_if chunkSize does not have any left over
+	int output[chunkSize]
+_else: int output[chunkSize+1]
+for i = 0 to i = processId-1:
+	if i == 0:
+		if processId == 0:
+			MPI_Send(result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) 
+			MPI_Recv(output[i], 1, MPI_INT, 0 , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE); 
+	else if i == processId-1:
+		if processId == i:
+			MPI_Send(result, 1, MPI_INT, 0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE)
+		else if processId == 0:
+			MPI_Recv(output[i], 1, MPI_INT, num_processes-1 , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE); 
+	else:
+		if processId == i:
+			MPI_Send(result, 1, MPI_INT, i+1,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE)
+		else:
+			int index = 1;
+			int next_index = i+index;
+			while(next_index != num_process-1)
+				if processId = next_index:
+					MPI_Recv(temp, 1, MPI_INT, next_index-1 , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+					MPI_Send(temp, 1, MPI_INT, next_index+1,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				index++;
+				next_index = i + index;
+			
+			if next_index == number_process -1:
+				if processId == next_index:
+					MPI_Recv(temp, 1, MPI_INT, next_index-1 , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+					MPI_Send(temp, 1, MPI_INT, 0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				if processId ==0:
+					MPI_Recv(output[i], chunkSize, MPI_INT, next_index-1 , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+				
+_if there is a left_over chunk, call processId 0 afterward and has this process compute the partial frequency and add it to the last index of output
+_loop through the output to add all the number up and this should have the total frequency
+
+	
+		
+	
+		
+	
+

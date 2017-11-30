@@ -1,0 +1,44 @@
+Ngoc Nguyen
+ID# 72114439
+
+
+Part A:
+
+In processImage function:
+
+_chunkSize = image_height/number_of_processes
+_since inputImage parameter passed in is a partial array of the original input file, start_of_chunk = 0 and end_of_chunk will be chunkSize*image_width
+_initialize partialOutputImage = new int[chunkSize*image_width]
+
+_in the sobel algorithm, since the input is only a partial part of the array, we need to check for edge cases to handle whether it is really the end of the file or it needs the neighbor process to send 2 beginning rows to it
+_so process X will need its neighbor process X+1 to send it two rows of the input array; if processId == number_of_processes-1 then it will only need to receive data from the root if there is any
+
+_use MPI_send() and MPI_receive() to send/recieve data
+
+_if the inputImage is equally distributed, then the last process will not need any more data, if the inputImage is not equally distributed, then the last process will need leftOver rows from the root to process the image, which can be sent in the beginning before calling scatter
+
+_return partialOutputImage when finished
+
+
+In the main function:
+
+_first figure out the chunkSize: image_height/number_of_processes
+
+_if chunkSize is even, each process will have equal chunk; if chunkSize is not even, need to use mod 
+_leftOver = image_height % number_of_processes
+_if there is a leftOver, need to send 2 rows of it to the process (number_of_process -1)
+
+_initialize a recv_buf = [image_width*chunkSize]
+_initialize int* to_return
+
+_call MPI_Scatter(inputImage, chunkSize*image_width, MPI_INT, recv_buf, chunkSize*image_width,0, MPI_COMM_WORLD)
+_have to_return = processImage(recv_buf, processId, number_of_processes, image_height, image_width)
+_call MPI_Gather(to_return, chunkSize*image_width, MPI_INT, outputImage, chunkSize*image_width, MPI_INT, 0, MPI_COMM_WORLD)
+
+_if there is a leftOver, need to call processId 0 and execute the leftover; create a new array that contain the leftOver chunk of the inputImage, leftOver*image_width to get the leftover and copy it over to the new array, then call processImage again
+_after executing the leftover indexes, copy it to the outputImage to the correct index
+
+_processId 0 will write to the output file
+
+
+
